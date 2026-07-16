@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f5f5f7" />
+  <meta name="description" content="Cool Calculator — ein schneller, moderner wissenschaftlicher Taschenrechner." />
+  <title>Cool Calculator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">+</span><span>Cool Calculator</span></div>
+      <div class="top-actions">
+        <button id="angleToggle" class="pill-button" type="button" aria-label="Winkelmodus">DEG</button>
+        <button id="themeToggle" class="icon-button" type="button" aria-label="Farbschema wechseln">☼</button>
+      </div>
+    </header>
+
+    <section class="calculator-grid">
+      <div class="calculator-card">
+        <div class="display" aria-live="polite">
+          <div id="expression" class="expression">0</div>
+          <div id="result" class="result">0</div>
+        </div>
+        <div class="memory-row">
+          <button data-action="memory-clear">MC</button><button data-action="memory-recall">MR</button>
+          <button data-action="memory-add">M+</button><button data-action="memory-subtract">M−</button>
+          <span class="memory-status" id="memoryStatus"></span>
+        </div>
+        <div class="keypad" role="group" aria-label="Tastenfeld">
+          <button class="function" data-value="sin(" aria-label="Sinus">sin</button>
+          <button class="function" data-value="cos(" aria-label="Kosinus">cos</button>
+          <button class="function" data-value="tan(" aria-label="Tangens">tan</button>
+          <button class="function" data-value="log(" aria-label="Logarithmus zur Basis 10">log</button>
+          <button class="function" data-value="ln(" aria-label="Natürlicher Logarithmus">ln</button>
+          <button class="function" data-value="sqrt(" aria-label="Quadratwurzel">√</button>
+          <button class="function" data-value="(" aria-label="Klammer auf">(</button>
+          <button class="function" data-value=")" aria-label="Klammer zu">)</button>
+          <button class="function" data-value="pi" aria-label="Pi">π</button>
+          <button class="function" data-value="e" aria-label="Eulersche Zahl">e</button>
+
+          <button class="utility" data-action="clear">AC</button>
+          <button class="utility" data-action="backspace" aria-label="Löschen">⌫</button>
+          <button class="utility" data-value="%">%</button>
+          <button class="operator" data-value="÷">÷</button>
+
+          <button data-value="7">7</button><button data-value="8">8</button><button data-value="9">9</button>
+          <button class="operator" data-value="×">×</button>
+          <button data-value="4">4</button><button data-value="5">5</button><button data-value="6">6</button>
+          <button class="operator" data-value="−">−</button>
+          <button data-value="1">1</button><button data-value="2">2</button><button data-value="3">3</button>
+          <button class="operator" data-value="+">+</button>
+          <button class="zero" data-value="0">0</button><button data-value=".">.</button>
+          <button class="equals" data-action="equals">=</button>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="panel-heading"><div><span class="eyebrow">DEINE BERECHNUNGEN</span><h2>Verlauf</h2></div><button id="clearHistory" class="text-button" type="button">Leeren</button></div>
+        <div id="historyList" class="history-list"><div class="empty-state"><span class="empty-icon">⌁</span><p>Noch keine Berechnungen.</p><small>Dein Verlauf erscheint hier automatisch.</small></div></div>
+        <div class="shortcut-note"><span>⌨</span><div><strong>Tipp</strong><p>Nutze deine Tastatur für noch schnelleres Rechnen.</p></div></div>
+      </aside>
+    </section>
+    <footer><span>Cool Calculator</span><span>Privat · Schnell · Offline</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
