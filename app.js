@@ -1,17 +1,136 @@
-const $=s=>document.querySelector(s);let expr='',memory=0,angle='DEG',history=JSON.parse(localStorage.getItem('cool-calculator-history')||'[]');
-const expressionEl=$('#expression'),resultEl=$('#result'),historyEl=$('#historyList'),memoryStatus=$('#memoryStatus');
-function render(){expressionEl.textContent=expr||'0';try{resultEl.textContent=expr?format(calculate(expr)): '0'}catch{resultEl.textContent=expr?'…':'0'};memoryStatus.textContent=memory?'M':'';renderHistory()}
-function format(n){if(!Number.isFinite(n))throw Error('Ungültig');if(Math.abs(n)<1e-12)n=0;return Number(n.toPrecision(12)).toLocaleString('de-DE',{maximumFractionDigits:10,useGrouping:false})}
-function add(v){if(expr==='0'&&/\d/.test(v))expr='';expr+=v;render()}
-function clear(){expr='';render()}function back(){expr=expr.slice(0,-1);render()}
-function tokenize(s){s=s.replace(/,/g,'.').replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/π/g,'pi');const t=[],re=/\s*(sin|cos|tan|log|ln|sqrt|abs|pi|e|\d*\.?\d+|[+\-*/%^()!])/gy;let i=0,m;while(i<s.length){re.lastIndex=i;m=re.exec(s);if(!m)throw Error('Syntax');t.push(m[1]);i=re.lastIndex}return t}
-function calculate(s){let t=tokenize(s),p=0;const peek=()=>t[p];const eat=x=>{if(x&&peek()!==x)throw Error('Syntax');return t[p++]};
-function primary(){let x=peek();if(x==='-'){eat();return -primary()}if(x==='+'){eat();return primary()}if(x==='('){eat();let v=addsub();eat(')');return v}if(['sin','cos','tan','log','ln','sqrt','abs'].includes(x)){eat();eat('(');let v=addsub();eat(')');if(x==='sin'||x==='cos'||x==='tan'){if(angle==='DEG')v=v*Math.PI/180;v=Math[x](v)}else if(x==='log')v=Math.log10(v);else if(x==='ln')v=Math.log(v);else if(x==='sqrt')v=Math.sqrt(v);else v=Math.abs(v);return v}if(x==='pi'){eat();return Math.PI}if(x==='e'){eat();return Math.E}if(x&&/^\d/.test(x)){eat();return parseFloat(x)}throw Error('Syntax')}
-function power(){let v=primary();if(peek()==='!'){eat();v=factorial(v)}if(peek()==='^'){eat();v=Math.pow(v,power())}return v}function mul(){let v=power();while(['*','/','%'].includes(peek())){let op=eat(),b=power();if(op==='*')v*=b;else if(op==='/')v/=b;else v%=b}return v}function addsub(){let v=mul();while(['+','-'].includes(peek())){let op=eat(),b=mul();v=op==='+'?v+b:v-b}return v}let out=addsub();if(p<t.length)throw Error('Syntax');return out}
-function factorial(n){if(n<0||n>170||n%1)return NaN;let r=1;for(let i=2;i<=n;i++)r*=i;return r}
-function equals(){if(!expr)return;try{let value=calculate(expr),display=format(value);history.unshift({e:expr,r:display});history=history.slice(0,20);localStorage.setItem('cool-calculator-history',JSON.stringify(history));expr=String(value);render()}catch{resultEl.textContent='Fehler'}}
-function renderHistory(){if(!history.length){historyEl.innerHTML='<div class="empty-state"><span class="empty-icon">⌁</span><p>Noch keine Berechnungen.</p><small>Dein Verlauf erscheint hier automatisch.</small></div>';return}historyEl.innerHTML=history.map((h,i)=>`<div class="history-item" data-history="${i}"><div class="history-expression">${escapeHtml(h.e)}</div><div class="history-result">${escapeHtml(h.r)}</div></div>`).join('')}
-function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-document.querySelectorAll('[data-value]').forEach(b=>b.addEventListener('click',()=>add(b.dataset.value)));document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>{let a=b.dataset.action;if(a==='clear')clear();if(a==='backspace')back();if(a==='equals')equals();if(a==='angle'){angle=angle==='DEG'?'RAD':'DEG';document.querySelector('[data-action="angle"]').textContent=angle}if(a==='memory-clear'){memory=0;render()}if(a==='memory-recall')add(String(memory));if(a==='memory-add'){try{memory+=calculate(expr||'0')}catch{}render()}if(a==='memory-subtract'){try{memory-=calculate(expr||'0')}catch{}render()}}));
-$('#clearHistory').onclick=()=>{history=[];localStorage.removeItem('cool-calculator-history');render()};historyEl.onclick=e=>{let item=e.target.closest('[data-history]');if(item){expr=history[item.dataset.history].e;render()}};$('#angleToggle').onclick=()=>{angle=angle==='DEG'?'RAD':'DEG';$('#angleToggle').textContent=angle;render()};$('#themeToggle').onclick=()=>{document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'':'dark';localStorage.setItem('cool-calculator-theme',document.documentElement.dataset.theme)};if(localStorage.getItem('cool-calculator-theme'))document.documentElement.dataset.theme=localStorage.getItem('cool-calculator-theme');
-document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='='){e.preventDefault();equals()}else if(e.key==='Escape')clear();else if(e.key==='Backspace')back();else if(/[0-9.+\-*/%()]/.test(e.key))add(e.key.replace('*','×').replace('/','÷').replace('-','−'));});render();
+const $ = selector => document.querySelector(selector);
+const storage = {
+  get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
+  set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* Still usable with storage disabled. */ } }
+};
+let expr = '', memory = 0, angle = 'DEG', justEvaluated = false;
+let history = storage.get('cool-calculator-history', []);
+if (!Array.isArray(history)) history = [];
+history = history.filter(item => item && typeof item.e === 'string' && typeof item.r === 'string').slice(0, 20);
+const expressionEl = $('#expression'), resultEl = $('#result');
+function format(n) {
+  if (!Number.isFinite(n)) throw Error('Undefined result');
+  if (Math.abs(n) < 1e-12) n = 0;
+  return String(Number(n.toPrecision(12)));
+}
+function pretty(s) { return s.replace(/sqrt/g, '√').replace(/pi/g, 'π').replace(/\*/g, '×').replace(/\//g, '÷'); }
+function render() {
+  expressionEl.textContent = pretty(expr) || '0';
+  try { resultEl.textContent = expr ? format(calculate(expr)) : '0'; $('#resultStatus').textContent = expr ? 'LIVE RESULT' : 'READY WHEN YOU ARE'; }
+  catch { resultEl.textContent = '…'; $('#resultStatus').textContent = 'KEEP GOING…'; }
+  $('#memoryStatus').textContent = memory ? 'M' : '';
+  $('#angleToggle').innerHTML = `${angle} <span>⌄</span>`;
+  expressionEl.scrollLeft = expressionEl.scrollWidth;
+}
+function add(value) {
+  if (justEvaluated && !['+', '−', '-', '×', '÷', '*', '/', '^', '%', '!'].includes(value)) expr = '';
+  justEvaluated = false;
+  if (expr === '0' && /^\d/.test(value)) expr = '';
+  expr += value;
+  render();
+}
+function tokenize(s) {
+  s = s.replace(/,/g, '.').replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/π/g, 'pi').trim();
+  const tokens = [], re = /\s*(sin|cos|tan|log|ln|sqrt|abs|pi|\d*\.?\d+(?:e[+-]?\d+)?|e|[+\-*/%^()!])/gy;
+  let i = 0;
+  while (i < s.length) { re.lastIndex = i; const m = re.exec(s); if (!m) throw Error('Syntax'); tokens.push(m[1]); i = re.lastIndex; }
+  return tokens;
+}
+function calculate(s) {
+  const tokens = tokenize(s); let p = 0;
+  const peek = () => tokens[p];
+  const eat = expected => { if (expected && peek() !== expected) throw Error('Syntax'); return tokens[p++]; };
+  function primary() {
+    const x = peek();
+    if (x === '(') { eat(); const v = sum(); eat(')'); return v; }
+    if (['sin', 'cos', 'tan', 'log', 'ln', 'sqrt', 'abs'].includes(x)) {
+      eat(); eat('('); let v = sum(); eat(')');
+      if (['sin', 'cos', 'tan'].includes(x)) {
+        if (angle === 'DEG') v *= Math.PI / 180;
+        if (x === 'tan' && Math.abs(Math.cos(v)) < 1e-14) throw Error('Undefined tangent');
+        return Math[x](v);
+      }
+      return x === 'log' ? Math.log10(v) : x === 'ln' ? Math.log(v) : x === 'sqrt' ? Math.sqrt(v) : Math.abs(v);
+    }
+    if (x === 'pi') { eat(); return Math.PI; }
+    if (x === 'e') { eat(); return Math.E; }
+    if (x && /^(\d|\.)/.test(x)) { eat(); return Number(x); }
+    throw Error('Incomplete expression');
+  }
+  function postfix() {
+    let v = primary();
+    while (peek() === '!' || peek() === '%') { const op = eat(); v = op === '%' ? v / 100 : factorial(v); }
+    return v;
+  }
+  function power() { let v = postfix(); if (peek() === '^') { eat(); v = Math.pow(v, unary()); } return v; }
+  function unary() { if (peek() === '-') { eat(); return -unary(); } if (peek() === '+') { eat(); return unary(); } return power(); }
+  function product() {
+    let v = unary();
+    while (true) {
+      if (peek() === '*' || peek() === '/') { const op = eat(), b = unary(); v = op === '*' ? v * b : v / b; }
+      else if (peek() && /^(\(|pi$|e$|sin$|cos$|tan$|log$|ln$|sqrt$|abs$)/.test(peek())) v *= unary();
+      else break;
+    }
+    return v;
+  }
+  function sum() { let v = product(); while (peek() === '+' || peek() === '-') { const op = eat(), b = product(); v = op === '+' ? v + b : v - b; } return v; }
+  const result = sum(); if (p !== tokens.length) throw Error('Syntax'); return result;
+}
+function factorial(n) { if (n < 0 || n > 170 || n % 1) throw Error('Invalid factorial'); let v = 1; for (let i = 2; i <= n; i++) v *= i; return v; }
+function equals() {
+  if (!expr) return;
+  try {
+    const value = calculate(expr), display = format(value);
+    history.unshift({ e: expr, r: display }); history = history.slice(0, 20);
+    storage.set('cool-calculator-history', history);
+    expr = String(Number(display)); justEvaluated = true;
+    render(); renderHistory(); $('#resultStatus').textContent = 'LOOKS LIKE AN ANSWER';
+  } catch { resultEl.textContent = 'Error'; $('#resultStatus').textContent = 'CHECK YOUR EXPRESSION'; }
+}
+function renderHistory() {
+  $('#historyCount').textContent = history.length;
+  $('#clearHistory').disabled = !history.length;
+  const list = $('#historyList'); list.replaceChildren();
+  if (!history.length) { list.innerHTML = '<div class="empty-state"><span class="empty-icon">≋</span><p>A clean slate.</p><small>Your calculations will land here.<br>Go on, make the first move.</small></div>'; return; }
+  history.forEach(item => {
+    const button = document.createElement('button'); button.className = 'history-item'; button.title = 'Reuse this expression';
+    const expression = document.createElement('span'); expression.className = 'history-expression'; expression.textContent = `${pretty(item.e)} =`;
+    const result = document.createElement('span'); result.className = 'history-result'; result.textContent = item.r;
+    button.append(expression, result); button.onclick = () => { expr = item.e; justEvaluated = false; render(); };
+    list.append(button);
+  });
+}
+function action(name) {
+  if (name === 'clear') { expr = ''; justEvaluated = false; }
+  if (name === 'backspace') { expr = expr.slice(0, -1); justEvaluated = false; }
+  if (name === 'equals') return equals();
+  if (name === 'sign') { expr = expr ? `-(${expr})` : '-'; justEvaluated = false; }
+  if (name === 'memory-clear') memory = 0;
+  if (name === 'memory-recall') return add(`(${memory})`);
+  if (name === 'memory-add' || name === 'memory-subtract') {
+    try { const next = memory + calculate(expr || '0') * (name === 'memory-add' ? 1 : -1); if (Number.isFinite(next)) memory = next; } catch { /* Incomplete input does not change memory. */ }
+  }
+  render();
+}
+document.querySelectorAll('[data-value]').forEach(b => b.onclick = () => add(b.dataset.value));
+document.querySelectorAll('[data-action]').forEach(b => b.onclick = () => action(b.dataset.action));
+$('#angleToggle').onclick = () => { angle = angle === 'DEG' ? 'RAD' : 'DEG'; render(); };
+$('#clearHistory').onclick = () => { history = []; storage.set('cool-calculator-history', history); renderHistory(); };
+const savedTheme = storage.get('cool-calculator-theme', 'dark');
+document.documentElement.dataset.theme = savedTheme === 'light' ? 'light' : 'dark';
+$('#themeToggle').onclick = () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; storage.set('cool-calculator-theme', theme); };
+$('#copyResult').onclick = async () => {
+  const button = $('#copyResult');
+  try { const value = format(calculate(expr || '0')); await navigator.clipboard.writeText(value); button.textContent = '✓ Copied'; }
+  catch { button.textContent = 'Cannot copy'; }
+  setTimeout(() => { button.innerHTML = '▢ <span>Copy</span>'; }, 1600);
+};
+document.addEventListener('keydown', event => {
+  if (event.ctrlKey || event.metaKey || event.altKey || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
+  if ((event.key === 'Enter' || event.key === ' ') && event.target.closest('button,a')) return;
+  if (event.key === 'Enter' || event.key === '=') { event.preventDefault(); equals(); }
+  else if (event.key === 'Escape') { event.preventDefault(); action('clear'); }
+  else if (event.key === 'Backspace' || event.key === 'Delete') { event.preventDefault(); action('backspace'); }
+  else if (/^[0-9.,+\-*/%^()!]$/.test(event.key)) { event.preventDefault(); add(event.key.replace('*', '×').replace('/', '÷').replace('-', '−').replace(',', '.')); }
+});
+render(); renderHistory();
