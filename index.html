@@ -1,74 +1,46 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#f5f5f7" />
-  <meta name="description" content="Cool Calculator — ein schneller, moderner wissenschaftlicher Taschenrechner." />
-  <title>Cool Calculator</title>
+  <meta name="theme-color" content="#111411" />
+  <meta name="description" content="Cool Calculator — a little more powerful. A beautifully simple scientific calculator with live results and local history." />
+  <title>Cool Calculator — Make it add up.</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark">+</span><span>Cool Calculator</span></div>
-      <div class="top-actions">
-        <button id="angleToggle" class="pill-button" type="button" aria-label="Winkelmodus">DEG</button>
-        <button id="themeToggle" class="icon-button" type="button" aria-label="Farbschema wechseln">☼</button>
-      </div>
+      <a class="brand" href="./" aria-label="Cool Calculator home"><span class="brand-mark">c<span>+</span></span><span>cool<span class="brand-light">calculator</span><span class="brand-dot">.</span></span></a>
+      <div class="top-actions"><span class="local-badge"><i></i> All local. All yours.</span><button id="themeToggle" class="icon-button" type="button" aria-label="Switch color theme" title="Switch color theme">☼</button></div>
     </header>
-
-    <section class="calculator-grid">
+    <section class="intro"><div class="eyebrow"><span class="tiny-plus">+</span> LESS FRICTION. MORE FUNCTION.</div><h1>Make it <em>add up.</em></h1><p>Big ideas. Small calculations. A little space to work things out.</p></section>
+    <section class="calculator-grid" aria-label="Calculator workspace">
       <div class="calculator-card">
-        <div class="display" aria-live="polite">
-          <div id="expression" class="expression">0</div>
-          <div id="result" class="result">0</div>
+        <div class="card-top"><span class="section-label"><span class="status-dot"></span> SCIENTIFIC CALCULATOR</span><button id="angleToggle" class="pill-button" type="button" aria-label="Toggle degrees or radians">DEG <span>⌄</span></button></div>
+        <div class="display" aria-live="polite" aria-atomic="true"><div id="expression" class="expression">0</div><div id="result" class="result">0</div><div class="display-caption"><span id="resultStatus">READY WHEN YOU ARE</span><button id="copyResult" class="copy-button" aria-label="Copy result" title="Copy result">▢ <span>Copy</span></button></div></div>
+        <div class="memory-row"><span class="memory-label">MEMORY</span><button data-action="memory-clear" title="Clear memory">MC</button><button data-action="memory-recall" title="Recall memory">MR</button><button data-action="memory-add" title="Add to memory">M+</button><button data-action="memory-subtract" title="Subtract from memory">M−</button><span class="memory-status" id="memoryStatus"></span></div>
+        <div class="keypad" role="group" aria-label="Calculator keypad">
+          <button class="function" data-value="sin(">sin</button><button class="function" data-value="cos(">cos</button><button class="function" data-value="tan(">tan</button><button class="function" data-value="sqrt(" aria-label="Square root">√</button><button class="function" data-value="^" aria-label="Power">x<sup>y</sup></button>
+          <button class="function" data-value="log(">log</button><button class="function" data-value="ln(">ln</button><button class="function" data-value="pi" aria-label="Pi">π</button><button class="function" data-value="e" aria-label="Euler's number">e</button><button class="function" data-value="!" aria-label="Factorial">n!</button>
+          <button class="utility clear" data-action="clear">AC</button><button class="utility" data-value="(">(</button><button class="utility" data-value=")">)</button><button class="utility" data-value="%" aria-label="Percent">%</button><button class="operator" data-value="÷" aria-label="Divide">÷</button>
+          <button data-value="7">7</button><button data-value="8">8</button><button data-value="9">9</button><button class="utility" data-action="backspace" aria-label="Backspace">⌫</button><button class="operator" data-value="×" aria-label="Multiply">×</button>
+          <button data-value="4">4</button><button data-value="5">5</button><button data-value="6">6</button><button class="function" data-value="^2" aria-label="Square">x²</button><button class="operator" data-value="−" aria-label="Subtract">−</button>
+          <button data-value="1">1</button><button data-value="2">2</button><button data-value="3">3</button><button class="function" data-action="sign" aria-label="Change sign">+/−</button><button class="operator" data-value="+" aria-label="Add">+</button>
+          <button class="zero" data-value="0">0</button><button data-value=".">.</button><button class="equals" data-action="equals">= <span>Enter ↵</span></button>
         </div>
-        <div class="memory-row">
-          <button data-action="memory-clear">MC</button><button data-action="memory-recall">MR</button>
-          <button data-action="memory-add">M+</button><button data-action="memory-subtract">M−</button>
-          <span class="memory-status" id="memoryStatus"></span>
-        </div>
-        <div class="keypad" role="group" aria-label="Tastenfeld">
-          <button class="function" data-value="sqrt(" aria-label="Quadratwurzel">√</button>
-          <button class="function" data-value="pi" aria-label="Pi">π</button>
-          <button class="function" data-value="^" aria-label="Potenz">^</button>
-          <button class="function" data-value="!" aria-label="Fakultät">!</button>
-
-          <button class="function" data-action="angle">Rad</button>
-          <button class="function" data-value="sin(" aria-label="Sinus">sin</button>
-          <button class="function" data-value="cos(" aria-label="Kosinus">cos</button>
-          <button class="function" data-value="tan(" aria-label="Tangens">tan</button>
-
-          <button class="function" data-action="inverse">Inv</button>
-          <button class="function" data-value="e" aria-label="Eulersche Zahl">e</button>
-          <button class="function" data-value="ln(" aria-label="Natürlicher Logarithmus">ln</button>
-          <button class="function" data-value="log(" aria-label="Logarithmus zur Basis 10">log</button>
-
-          <button class="utility" data-action="clear">AC</button>
-          <button class="function" data-value="(" aria-label="Klammer auf">( )</button>
-          <button class="utility" data-value="%">%</button>
-          <button class="operator" data-value="÷">÷</button>
-
-          <button data-value="7">7</button><button data-value="8">8</button><button data-value="9">9</button>
-          <button class="operator" data-value="×">×</button>
-          <button data-value="4">4</button><button data-value="5">5</button><button data-value="6">6</button>
-          <button class="operator" data-value="−">−</button>
-          <button data-value="1">1</button><button data-value="2">2</button><button data-value="3">3</button>
-          <button class="operator" data-value="+">+</button>
-          <button class="zero" data-value="0">0</button><button data-value=",">,</button>
-          <button class="utility" data-action="backspace" aria-label="Löschen">⌫</button>
-          <button class="equals" data-action="equals">=</button>
-        </div>
+        <div class="calculator-bottom"><span><i></i> Live results</span><span>Precision meets simplicity.</span></div>
       </div>
-
       <aside class="side-panel">
-        <div class="panel-heading"><div><span class="eyebrow">DEINE BERECHNUNGEN</span><h2>Verlauf</h2></div><button id="clearHistory" class="text-button" type="button">Leeren</button></div>
-        <div id="historyList" class="history-list"><div class="empty-state"><span class="empty-icon">⌁</span><p>Noch keine Berechnungen.</p><small>Dein Verlauf erscheint hier automatisch.</small></div></div>
-        <div class="shortcut-note"><span>⌨</span><div><strong>Tipp</strong><p>Nutze deine Tastatur für noch schnelleres Rechnen.</p></div></div>
+        <div class="panel-heading"><div><span class="eyebrow">YOUR THOUGHT PROCESS</span><h2>History <span id="historyCount">0</span></h2></div><button id="clearHistory" class="text-button" type="button" title="Clear history">Clear ↗</button></div>
+        <div class="history-hint">A second look, whenever you need it.</div>
+        <div id="historyList" class="history-list"></div>
+        <div class="history-private"><span>⌾</span> Saved on this device. Never on a server.</div>
+        <div class="shortcut-note"><div class="shortcut-heading"><span>⌨</span><strong>Keep your hands on the keys.</strong></div><p>Your keyboard is a calculator, too.</p><div class="shortcut"><span>Calculate</span><kbd>enter ↵</kbd></div><div class="shortcut"><span>Start fresh</span><kbd>esc</kbd></div><div class="shortcut"><span>Undo last digit</span><kbd>⌫</kbd></div></div>
+        <div class="little-note"><span>✳</span><p>For the everyday math.<br>And the <em>what ifs.</em></p></div>
       </aside>
     </section>
-    <footer><span>Cool Calculator</span><span>Privat · Schnell · Offline</span></footer>
+    <footer><span>Built for curious minds.</span><span>NO ADS <b>·</b> NO TRACKING <b>·</b> JUST MATH <span class="footer-symbol">↗</span></span></footer>
   </main>
   <script src="app.js"></script>
 </body>
